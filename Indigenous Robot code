@@ -1,0 +1,947 @@
+#include <Servo.h>
+
+Servo SG90;
+
+// Define sensor pins
+const int leftSensorPin = A1;     // Assuming connected to digital pin 2
+const int leftmostSensorPin = A0;     // Assuming connected to digital pin 2
+const int middleSensorPin = A2;   // Assuming connected to digital pin 3
+const int rightSensorPin = A3;    // Assuming connected to digital pin 4
+const int rightmostSensorPin = A4;    // Assuming connected to digital pin 4
+
+//Define sidesensors
+const int rss1 = 6;
+const int lss1 = 8;
+
+//Rock & Tree Sensors
+const int lrt1 = 30; //left rock tree
+const int rrt1 = 31; //right rock tree
+
+//Reverse line following 
+const int lrev1 = 32; //left reverse sensor
+const int rrev1 = 33; //right reverse sensor
+
+//Grid sensors
+const int gr1x1 = 15;
+const int gr1x2 = 16;
+const int gr1x3 = 17;
+const int gr2x1 = 18;
+const int gr2x2 = 19;
+const int gr2x3 = 20;
+const int gr3x1 = 21;
+const int gr3x2 = 22;
+const int gr3x3 = 23;
+
+// Define motor pins
+const int leftPWM = 7;      // PWM pin for left motor speed control
+const int leftfor = 52;  // Direction pin for left motor forward
+const int leftrev = 50;  // Direction pin for left motor reverse
+const int rightPWM = 2;     // PWM pin for right motor speed control
+const int rightfor = 53;// Direction pin for right motor forward
+const int rightrev = 51;// Direction pin for right motor reverse
+
+int pos = 190;
+
+void setup() 
+{
+  Serial.begin(9600);
+  // Set sensor pins as inputs
+  pinMode(leftSensorPin, INPUT);
+  pinMode(middleSensorPin, INPUT);
+  pinMode(rightSensorPin, INPUT);
+  pinMode(leftmostSensorPin, INPUT);
+  pinMode(rightmostSensorPin, INPUT);
+
+  SG90.attach(13);
+  SG90.write(0);
+  // Set rock & tree sensors as inputs
+  pinMode(lrt1, INPUT);
+  pinMode(rrt1, INPUT);
+
+  //Set reverse line following sensors
+  pinMode(lrev1, INPUT);
+  pinMode(rrev1, INPUT);
+
+  //Setting grid sensors as inputs
+  pinMode(gr1x1, INPUT);
+  pinMode(gr1x2, INPUT);
+  pinMode(gr1x3, INPUT);
+  pinMode(gr2x1, INPUT);
+  pinMode(gr2x2, INPUT);
+  pinMode(gr2x3, INPUT);  
+  pinMode(gr3x1, INPUT);
+  pinMode(gr3x2, INPUT);
+  pinMode(gr3x3, INPUT);
+
+  //Setting sidesensors as inputs
+  pinMode(rss1, INPUT);
+  pinMode(lss1, INPUT);
+
+  // Set motor pins as outputs
+  pinMode(leftPWM, OUTPUT);
+  pinMode(leftfor, OUTPUT);
+  pinMode(leftrev, OUTPUT);
+  pinMode(rightPWM, OUTPUT);
+  pinMode(rightfor, OUTPUT);
+  pinMode(rightrev, OUTPUT);
+}
+
+int rs1 = digitalRead(rightSensorPin);
+int ls1 = digitalRead(leftSensorPin);
+int rs2 = digitalRead(rightmostSensorPin);
+int ls2 = digitalRead(leftmostSensorPin);
+int ms = digitalRead(middleSensorPin);
+
+int g1x1 = digitalRead(gr1x1);
+int g1x2 = digitalRead(gr1x2);
+int g1x3 = digitalRead(gr1x3);
+int g2x1 = digitalRead(gr2x1);
+int g2x2 = digitalRead(gr2x2);
+int g2x3 = digitalRead(gr2x3);
+int g3x1 = digitalRead(gr3x1);
+int g3x2 = digitalRead(gr3x2);
+int g3x3 = digitalRead(gr3x3);
+
+int lrev = digitalRead(lrev1);
+int rrev = digitalRead(rrev1);
+
+int lrt = digitalRead(lrt1);
+int rrt = digitalRead(rrt1);
+
+int rss = digitalRead(rss1);
+int lss = digitalRead(lss1);
+
+int lpwm=115;
+int rpwm=110;
+int serdown = 85;
+int serup = 15;
+
+void turnRight() 
+{
+  // Set motor directions for turning right
+  digitalWrite(rightfor, LOW);
+  digitalWrite(rightrev, HIGH);
+  digitalWrite(leftfor, HIGH);
+  digitalWrite(leftrev, LOW);
+  analogWrite(leftPWM, 205);
+  analogWrite(rightPWM, 200);
+  
+  // Move until middle sensor detects the line
+  while (digitalRead(middleSensorPin) == HIGH) 
+  {
+    // Keep turning right
+  }
+}
+
+void turnLeft() 
+{
+  // Set motor directions for turning right
+  digitalWrite(rightfor, HIGH);
+  digitalWrite(rightrev, LOW);
+  digitalWrite(leftfor, LOW);
+  digitalWrite(leftrev, HIGH);
+  analogWrite(leftPWM, 205);
+  analogWrite(rightPWM, 200);
+  
+  // Move until middle sensor detects the line
+  while (digitalRead(middleSensorPin) == HIGH) 
+  {
+    // Keep turning left
+  }
+}
+
+void linesehator()
+{
+  digitalWrite(rightfor, LOW);
+  digitalWrite(rightrev, HIGH);
+  digitalWrite(leftfor, HIGH);
+  digitalWrite(leftrev, LOW);
+  analogWrite(leftPWM, 205);
+  analogWrite(rightPWM, 200); 
+  delay(370);
+}
+
+void linesehatol()
+{
+
+  digitalWrite(rightfor, HIGH);
+  digitalWrite(rightrev, LOW);
+  digitalWrite(leftfor, LOW);
+  digitalWrite(leftrev, HIGH);
+  analogWrite(leftPWM, 205);
+  analogWrite(rightPWM, 200);
+  delay(320);
+}
+
+void stop(int a)
+{
+  digitalWrite(rightfor, LOW);
+  digitalWrite(rightrev, LOW);
+  digitalWrite(leftfor, LOW);
+  digitalWrite(leftrev, LOW);
+  analogWrite(leftPWM, 145);
+  analogWrite(rightPWM, 140);
+  delay(a);
+}
+
+void movereverse(int a)
+{
+  int revcount = 0;
+  //a is the variable defining junction counters while moving reverse
+  //The number entered here is the number of junctions for which you have to move reverse
+  while(1)
+  {
+    int lrev = digitalRead(lrev1);
+    int rrev = digitalRead(rrev1);
+
+    if(digitalRead(lrev1) == LOW && digitalRead(rrev1) == LOW)
+    {
+      revcount = revcount+1;
+      delay(50);
+      Serial.println("Revcount = ");
+      Serial.println(revcount);
+      if(revcount == a)
+      {Serial.println("loop break");
+        break;
+      }
+    }
+
+    if(digitalRead(rrev1) == LOW && digitalRead(lrev1) == HIGH)
+    {
+      int lrev = digitalRead(lrev1);
+      int rrev = digitalRead(rrev1);
+
+      digitalWrite(rightfor, HIGH);
+      digitalWrite(rightrev, LOW);
+      digitalWrite(leftfor, LOW);
+      digitalWrite(leftrev, HIGH);
+      analogWrite(leftPWM, 115);
+      analogWrite(rightPWM, 110);
+      delay(15);
+    }
+    if(digitalRead(rrev1) == HIGH && digitalRead(lrev1) == LOW)
+    {
+      int lrev = digitalRead(lrev1);
+      int rrev = digitalRead(rrev1);
+
+      digitalWrite(rightfor, LOW);
+      digitalWrite(rightrev, HIGH);
+      digitalWrite(leftfor, HIGH);
+      digitalWrite(leftrev, LOW);
+      analogWrite(leftPWM, 115);
+      analogWrite(rightPWM, 110);
+      delay(15);
+    }
+    
+   
+    digitalWrite(rightfor, LOW);
+    digitalWrite(rightrev, HIGH);
+    digitalWrite(leftfor, LOW);
+    digitalWrite(leftrev, HIGH);
+    analogWrite(leftPWM, 155);
+    analogWrite(rightPWM, 150);
+  }
+}
+
+int junccount = 0;
+
+//lrt and rrt sensors are giving 1 on black
+//lrev and rrev senors are giving 0 on black 
+
+void loop() 
+{
+  int rs1 = digitalRead(rightSensorPin);
+  int ls1 = digitalRead(leftSensorPin);
+  int rs2 = digitalRead(rightmostSensorPin);
+  int ls2 = digitalRead(leftmostSensorPin);
+  int ms = digitalRead(middleSensorPin);
+
+  int lrt = digitalRead(lrt1);
+  int rrt = digitalRead(rrt1);
+
+  //Introducing Counter
+  Serial.println(junccount);
+
+  
+
+  while((rs1 == HIGH && ls1 == HIGH && ms == LOW) || (rs1 == LOW && ls1 == LOW && ms == LOW))
+  {
+    int rs1 = digitalRead(rightSensorPin);
+    int ls1 = digitalRead(leftSensorPin);
+    int rs2 = digitalRead(rightmostSensorPin);
+    int ls2 = digitalRead(leftmostSensorPin);
+    int ms = digitalRead(middleSensorPin);
+
+    if(rs1 == HIGH && ls1 == HIGH && ms == HIGH && rs1 == HIGH && ls1 == HIGH)
+    {
+      
+    }
+
+    //Incrementing counter
+    if(rs2 == LOW && ls2 == LOW)
+    {
+      junccount = junccount + 1;
+      delay(100);
+    
+      Serial.print(junccount);
+      /*if(junccount == 2)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(130);
+
+        linesehator();
+        turnRight();
+
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(170);
+
+      }*/
+      if(junccount == 4)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(130);
+      
+
+        linesehatol();
+        turnLeft();
+      }
+      if(junccount == 6)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(130);
+
+        linesehatol();
+        turnLeft();
+        stop(500);
+        SG90.write(serdown);
+      }
+      if(junccount == 9)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(70);
+      
+
+        linesehator();
+        turnRight();
+      }
+      if(junccount == 10)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(70);
+      
+
+        linesehator();
+        turnRight();
+      }
+      //Condition for while in junction sensing condition(digitalRead(lrt1) == HIGH && digitalRead(rrt1) == HIGH)
+
+      //Picking 1st rock
+      if(junccount == 12)
+       {
+        stop(400);
+
+        //Servo lifting
+        for (pos = serdown; pos >= serup; pos -= 1) 
+        { // goes from 180 degrees to 0 degrees
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+
+        stop(400);
+
+      }
+      if(junccount == 13)
+      {
+        linesehatol();
+        turnLeft();
+
+      }
+      //Dropping 1st rock
+      if(junccount == 16)
+      {
+        stop(1500);
+
+        while(1)
+        {
+          Serial.print(lrt);
+          Serial.print(rrt);
+          lrt;
+          rrt;
+          Serial.print(rrt);
+          digitalWrite(rightfor, HIGH);
+          digitalWrite(rightrev, LOW);
+          digitalWrite(leftfor, HIGH);
+          digitalWrite(leftrev, LOW);
+          analogWrite(leftPWM, lpwm);
+          analogWrite(rightPWM, rpwm);
+          if(digitalRead(lrt1) == LOW && digitalRead(rrt1) == LOW)
+          {
+            break;
+          }
+        }
+
+        stop(700);
+
+        //movereverse(1);
+
+        stop(500);
+
+        //Servo Dropping
+        for (pos = serup; pos <= serdown; pos += 1) 
+        { 
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+
+        stop(800);
+
+        movereverse(1);
+        stop(500);
+
+        movereverse(1);
+        stop(500);
+
+        stop(150);
+        //SG90.write(serup);
+        stop(500);
+
+        linesehatol();
+        turnLeft();
+      }
+      if(junccount == 17)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(90);
+
+        linesehator();
+        turnRight();
+
+        stop(400);
+        //SG90.write(serdown);
+      }
+      
+      //1st tree pickup
+      if(junccount == 19)
+      {
+        stop(600);
+
+        //Servo Lifting
+        for (pos = serdown; pos >= serup; pos -= 1) 
+        { // goes from 180 degrees to 0 degrees
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+
+        stop(350);
+
+        linesehator();
+        turnRight();
+        linesehator();
+        turnRight();
+      }
+      
+      //Dropping 1st tree
+      if(junccount == 22)
+      {
+        stop(500);
+
+        while(1 /*digitalRead(lrt1) == HIGH && digitalRead(rrt1) == HIGH*/)
+        {
+          Serial.print(lrt);
+          Serial.print(rrt);
+          lrt;
+          rrt;
+          Serial.print(lrt);
+          Serial.print(rrt);
+          digitalWrite(rightfor, HIGH);
+          digitalWrite(rightrev, LOW);
+          digitalWrite(leftfor, HIGH);
+          digitalWrite(leftrev, LOW);
+          analogWrite(leftPWM, lpwm);
+          analogWrite(rightPWM, rpwm);
+          if(digitalRead(lrt1) == LOW && digitalRead(rrt1) == LOW)
+          {
+            break;
+          }
+        }
+
+        stop(700);
+
+        //Servo Dropping
+        for (pos = serup; pos <= serdown; pos += 1) 
+        { 
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+
+        stop(500);
+
+        movereverse(1);
+        stop(300);
+
+        //SG90.write(serup);
+        stop(300);
+
+        linesehator();
+        turnRight();
+
+        digitalWrite(rightfor, HIGH);
+        digitalWrite(rightrev, LOW);
+        digitalWrite(leftfor, HIGH);
+        digitalWrite(leftrev, LOW);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(130);
+
+        stop(300);
+        movereverse(1);
+        stop(300);
+
+        stop(200);
+      }
+      //Picking 2nd rock
+      if(junccount == 24)
+       {
+        stop(400);
+
+        //Servo lifting
+        for (pos = serdown; pos >= serup; pos -= 1) 
+        { // goes from 180 degrees to 0 degrees
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+
+        stop(300);
+
+        linesehator();
+        turnRight();
+
+      }
+      if(junccount == 25)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(90);
+
+        linesehator();
+        turnRight();
+      }
+      if(junccount == 26)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(90);
+
+        linesehatol();
+        turnLeft();
+      }
+      //Dropping 2nd rock
+      if(junccount == 27)
+      {
+
+        stop(500);
+
+        while(1)
+        {
+          Serial.print(lrt);
+          Serial.print(rrt);
+          lrt;
+          rrt;
+          Serial.print(lrt);
+          Serial.print(rrt);
+          digitalWrite(rightfor, HIGH);
+          digitalWrite(rightrev, LOW);
+          digitalWrite(leftfor, HIGH);
+          digitalWrite(leftrev, LOW);
+          analogWrite(leftPWM, lpwm);
+          analogWrite(rightPWM, rpwm);
+          if(digitalRead(lrt1) == LOW && digitalRead(rrt1) == LOW)
+          {
+            break;
+          }
+        }
+
+        stop(700);
+
+        //Servo Dropping
+        for (pos = serup; pos <= serdown; pos += 1) 
+        { 
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+        stop(300);
+
+
+        movereverse(1);
+        stop(500);
+
+        movereverse(1);
+        stop(500);
+
+        linesehatol();
+        turnLeft();
+
+        stop(300);
+      }
+      if(junccount == 28)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(90);
+
+        linesehator();
+        turnRight();
+
+        SG90.write(serdown);
+      }
+      //Picking 2nd tree & Dropping 2nd tree
+      if(junccount == 30)
+      {
+        //Picking 2nd tree
+        stop(700);
+        
+        //Servo Lifting
+        for (pos = serdown; pos >= serup; pos -= 1) 
+        { // goes from 180 degrees to 0 degrees
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+        
+        stop(400);
+
+        movereverse(1);
+        stop(400);
+
+        movereverse(1);
+        stop(400);
+
+        movereverse(1);
+        stop(400);
+
+        movereverse(1);
+        stop(400);
+
+
+        //Dropping 2nd tree
+        stop(700);
+
+        while(1)
+        {
+          Serial.print(lrt);
+          Serial.print(rrt);
+          lrt;
+          rrt;
+          Serial.print(lrt);
+          Serial.print(rrt);
+          digitalWrite(rightfor, HIGH);
+          digitalWrite(rightrev, LOW);
+          digitalWrite(leftfor, HIGH);
+          digitalWrite(leftrev, LOW);
+          analogWrite(leftPWM, lpwm);
+          analogWrite(rightPWM, rpwm);
+          if(digitalRead(lrt1) == LOW && digitalRead(rrt1) == LOW)
+          {
+            break;
+          }
+        }
+
+        //Servo Dropping
+        for (pos = serup; pos <= serdown; pos += 1) 
+        { 
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+        stop(400);
+
+        movereverse(1);
+        stop(400);
+
+        movereverse(1);
+        stop(400);
+
+        linesehatol();
+        turnLeft();
+      }
+      if(junccount == 31)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(90);
+
+        linesehator();
+        turnRight();
+      }
+      //Picking 3rd rock
+      if(junccount == 34)
+       {
+        stop(400);
+
+        //Servo lifting
+        for (pos = serdown; pos >= serup; pos -= 1) 
+        { // goes from 180 degrees to 0 degrees
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+
+        stop(300);
+
+        linesehator();
+        turnRight();
+      }
+      if(junccount == 35)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(90);
+
+        linesehatol();
+        turnLeft();
+        stop(300);
+      }
+      if(junccount == 36)
+      {
+        movereverse(1);
+        stop(300);
+      }
+      //Dropping 3rd rock
+      if(junccount == 37)
+      {
+
+        stop(500);
+
+        while(1)
+        {
+          Serial.print(lrt);
+          Serial.print(rrt);
+          lrt;
+          rrt;
+          Serial.print(lrt);
+          Serial.print(rrt);
+          digitalWrite(rightfor, HIGH);
+          digitalWrite(rightrev, LOW);
+          digitalWrite(leftfor, HIGH);
+          digitalWrite(leftrev, LOW);
+          analogWrite(leftPWM, lpwm);
+          analogWrite(rightPWM, rpwm);
+          if(digitalRead(lrt1) == LOW && digitalRead(rrt1) == LOW)
+          {
+            break;
+          }
+        }
+
+        stop(700);
+
+        //Servo Dropping
+        for (pos = serup; pos <= serdown; pos += 1) 
+        { 
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+        stop(300);
+
+
+        movereverse(1);
+        stop(500);
+
+        movereverse(1);
+        stop(500);
+
+        linesehatol();
+        turnLeft();
+
+        stop(300);
+      }
+      if(junccount == 38)
+      {
+        digitalWrite(rightfor, LOW);
+        digitalWrite(rightrev, HIGH);
+        digitalWrite(leftfor, LOW);
+        digitalWrite(leftrev, HIGH);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(90);
+
+        linesehator();
+        turnRight();
+      }
+      //Picking 3rd tree
+      if(junccount == 40)
+       {
+        stop(400);
+
+        //Servo lifting
+        for (pos = serdown; pos >= serup; pos -= 1) 
+        { // goes from 180 degrees to 0 degrees
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+        stop(300);
+
+      linesehatol();
+      turnLeft();
+      linesehatol();
+      turnLeft();
+      }
+      //Dropping 3rd tree
+      if(junccount == 41)
+      {
+        stop(400);
+
+        while(1)
+        {
+          Serial.print(lrt);
+          Serial.print(rrt);
+          lrt;
+          rrt;
+          Serial.print(lrt);
+          Serial.print(rrt);
+          digitalWrite(rightfor, HIGH);
+          digitalWrite(rightrev, LOW);
+          digitalWrite(leftfor, HIGH);
+          digitalWrite(leftrev, LOW);
+          analogWrite(leftPWM, lpwm);
+          analogWrite(rightPWM, rpwm);
+          if(digitalRead(lrt1) == LOW && digitalRead(rrt1) == LOW)
+          {
+            break;
+          }
+        }
+
+        stop(700);
+
+        //Servo Dropping
+        for (pos = serup; pos <= serdown; pos += 1) 
+        { 
+          SG90.write(pos);              // tell servo to go to position in variable 'pos'
+          delay(15);
+        }
+
+        stop(800);
+
+        movereverse(1);
+        stop(200);
+
+        SG90.write(serup);
+        stop(200);
+
+        linesehatol();
+        turnLeft();
+      }
+      if(junccount == 45)
+      {
+        digitalWrite(rightfor, HIGH);
+        digitalWrite(rightrev, LOW);
+        digitalWrite(leftfor, HIGH);
+        digitalWrite(leftrev, LOW);
+        analogWrite(leftPWM, lpwm);
+        analogWrite(rightPWM, rpwm);
+        delay(40);
+        while(true)
+        {
+          digitalWrite(rightfor, LOW);
+          digitalWrite(rightrev, HIGH);
+          digitalWrite(leftfor, LOW);
+          digitalWrite(leftrev, HIGH);
+          analogWrite(leftPWM, 0);
+          analogWrite(rightPWM, 0);
+          delay(135);
+        }
+        
+      }
+    }
+    if(rs1 == LOW && ls1 == HIGH)
+    {
+      int rs1 = digitalRead(rightSensorPin);
+      int ls1 = digitalRead(leftSensorPin);
+      int rs2 = digitalRead(rightmostSensorPin);
+      int ls2 = digitalRead(leftmostSensorPin);
+      int ms = digitalRead(middleSensorPin);
+
+      digitalWrite(rightfor, LOW);
+      digitalWrite(rightrev, HIGH);
+      digitalWrite(leftfor, HIGH);
+      digitalWrite(leftrev, LOW);
+      analogWrite(leftPWM, 140);
+      analogWrite(rightPWM, 135);
+      delay(15);
+    }
+    if(rs1 == HIGH && ls1 == LOW)
+    {
+      int rs1 = digitalRead(rightSensorPin);
+      int ls1 = digitalRead(leftSensorPin);
+      int rs2 = digitalRead(rightmostSensorPin);
+      int ls2 = digitalRead(leftmostSensorPin);
+      int ms = digitalRead(middleSensorPin);
+
+      digitalWrite(rightfor, HIGH);
+      digitalWrite(rightrev, LOW);
+      digitalWrite(leftfor, LOW);
+      digitalWrite(leftrev, HIGH);
+      analogWrite(leftPWM, 140);
+      analogWrite(rightPWM, 135);
+      delay(15);
+    }
+    
+    digitalWrite(rightfor, HIGH);
+    digitalWrite(rightrev, LOW);
+    digitalWrite(leftfor, HIGH);
+    digitalWrite(leftrev, LOW);
+    analogWrite(leftPWM, 145);
+    analogWrite(rightPWM, 140);
+  }
+}
